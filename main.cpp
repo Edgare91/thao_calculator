@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <stack>
 
 using namespace std;
 
@@ -50,10 +51,79 @@ uint8_t const width = 16U;
  */
 shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
 {
-    // this is example code which returns a (smart shared) pointer to 16-bit value
-    uint16_t val = 0b1001100100000011;
-    shared_ptr<uint16_t> result = make_shared<uint16_t>(val);
-    return result;
+    static stack<uint16_t> s;
+
+    switch (cmd)
+    {
+    case cmd_enter:
+        s.push(value);
+        return make_shared<uint16_t>(s.top());
+        break;
+    case cmd_clear:
+        while (!s.empty())
+            s.pop();
+        return nullptr;
+    case cmd_pop:
+        if (!s.empty())
+            s.pop();
+        break;
+    case cmd_top:
+        if (!s.empty())
+        {
+            return make_shared<uint16_t>(s.top());
+        }
+        break;
+    case cmd_left_shift:
+        if (!s.empty())
+        {
+            uint16_t topValue = s.top();
+            s.pop();
+            s.push(topValue << 1);
+        }
+        break;
+    case cmd_right_shift:
+        if (!s.empty())
+        {
+            uint16_t topValue = s.top();
+            s.pop();
+            s.push(topValue >> 1);
+        }
+        break;
+    case cmd_or:
+        if (s.size() >= 2)
+        {
+            uint16_t a = s.top();
+            s.pop();
+            uint16_t b = s.top();
+            s.pop();
+            s.push(a | b);
+        }
+        break;
+    case cmd_and:
+        if (s.size() >= 2)
+        {
+            uint16_t a = s.top();
+            s.pop();
+            uint16_t b = s.top();
+            s.pop();
+            s.push(a & b);
+        }
+        break;
+    case cmd_add:
+        if (s.size() >= 2)
+        {
+            uint16_t a = s.top();
+            s.pop();
+            uint16_t b = s.top();
+            s.pop();
+            s.push(a + b);
+        }
+        break;
+    default:
+        break;
+    }
+
+    return make_shared<uint16_t>(0); // Valor predeterminado si no hay nada en el stack
 }
 
 /*
