@@ -14,10 +14,7 @@
 
 using namespace std;
 
-/*
- * *** STUDENTS WILL NEED TO CHANGE INPUT_CSV_FILE PATH BELOW TO POINT TO THE rpn-input.csv FILE ***
- * *** ON THEIR LAPTOP/COMPUTER ***
- */
+// input file
 #define INPUT_CSV_FILE "/Users/Electronautae/Documents/Hello_World/GitHub/Thao/thao_calculator/rpn-input.csv"
 
 // test controls
@@ -44,11 +41,7 @@ vector<string> command_name = {"cmd_enter", "cmd_clear", "cmd_pop", "cmd_top", "
                                "cmd_right_shift", "cmd_or", "cmd_and", "cmd_add"};
 uint8_t const width = 16U;
 
-/*
- * *** STUDENTS SHOULD WRITE CODE FOR THIS FUNCTION ***
- * Students should create or add any data structures needed.
- * Students should create or add any functions or classes they may need.
- */
+// function to calculate the result of the command
 shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
 {
     static stack<uint16_t> s;
@@ -58,11 +51,12 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
     case cmd_enter:
         s.push(value);
         return make_shared<uint16_t>(s.top());
-        break;
+
     case cmd_clear:
         while (!s.empty())
             s.pop();
         return nullptr;
+
     case cmd_pop:
         if (!s.empty())
         {
@@ -73,6 +67,7 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             }
         }
         return nullptr;
+
     case cmd_top:
         if (!s.empty())
         {
@@ -81,21 +76,29 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
         return nullptr;
 
     case cmd_left_shift:
-        if (!s.empty())
+        if (s.size() >= 2)
         {
-            uint16_t topValue = s.top();
+            uint16_t a = s.top();
             s.pop();
-            s.push(topValue << 1);
+            uint16_t b = s.top();
+            s.pop();
+            s.push(b << a);
+            return make_shared<uint16_t>(s.top());
         }
-        break;
+        return nullptr;
+
     case cmd_right_shift:
-        if (!s.empty())
+        if (s.size() >= 2)
         {
-            uint16_t topValue = s.top();
+            uint16_t a = s.top();
             s.pop();
-            s.push(topValue >> 1);
+            uint16_t b = s.top();
+            s.pop();
+            s.push(b >> a);
+            return make_shared<uint16_t>(s.top());
         }
-        break;
+        return nullptr;
+
     case cmd_or:
         if (s.size() >= 2)
         {
@@ -104,8 +107,10 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(a | b);
+            return make_shared<uint16_t>(s.top());
         }
-        break;
+        return nullptr;
+
     case cmd_and:
         if (s.size() >= 2)
         {
@@ -114,23 +119,43 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(a & b);
+            return make_shared<uint16_t>(s.top());
         }
-        break;
+        return nullptr;
+
     case cmd_add:
+
         if (s.size() >= 2)
         {
             uint16_t a = s.top();
             s.pop();
             uint16_t b = s.top();
             s.pop();
-            s.push(a + b);
-        }
-        break;
-    default:
-        break;
-    }
 
-    return make_shared<uint16_t>(0); // Valor predeterminado si no hay nada en el stack
+            // add bitwise without carry
+            uint16_t result = a ^ b;
+
+            // carry
+            uint16_t carry = (a & b) << 1;
+
+            // add with carry
+            while (carry != 0)
+            {
+                uint16_t temp = result;
+                result = result ^ carry;
+                carry = (temp & carry) << 1;
+            }
+
+            s.push(result);
+            return make_shared<uint16_t>(s.top());
+        }
+        elif (s.size() == 1) :
+
+                               else : return nullptr;
+
+    default:
+        return make_shared<uint16_t>(0); // 0 if there is an empty stack
+    }
 }
 
 /*
