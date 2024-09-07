@@ -1,5 +1,6 @@
 #include <stdint.h>
-
+// limit the bitset to 16 bits
+#include <limits>
 #include <bitset>
 #include <cmath>
 #include <cstdint>
@@ -41,26 +42,45 @@ vector<string> command_name = {"cmd_enter", "cmd_clear", "cmd_pop", "cmd_top", "
                                "cmd_right_shift", "cmd_or", "cmd_and", "cmd_add"};
 uint8_t const width = 16U;
 
+// function to count the number of significant bits to determine if the result is greater than 16 bits
+int count_significant_bits(uint16_t value)
+{
+    int i = 0;
+    while (value > 0)
+    {
+        value >>= 1;
+        i++;
+    }
+    return i;
+}
+
 // function to calculate the result of the command
 shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
 {
+    // stack to store the values
     static stack<uint16_t> s;
+
+    // copy the original stack
+    stack<uint16_t> original_stack = s;
 
     switch (cmd)
     {
     case cmd_enter:
         s.push(value);
+        original_stack = s; // Update the backup stack
         return make_shared<uint16_t>(s.top());
 
     case cmd_clear:
         while (!s.empty())
             s.pop();
+        original_stack = s; // Update the backup stack
         return nullptr;
 
     case cmd_pop:
         if (!s.empty())
         {
             s.pop();
+            original_stack = s; // Update the backup stack
             if (!s.empty())
             {
                 return make_shared<uint16_t>(s.top());
@@ -83,6 +103,7 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(b << a);
+            original_stack = s; // Update the backup stack
             return make_shared<uint16_t>(s.top());
         }
         return nullptr;
@@ -95,6 +116,7 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(b >> a);
+            original_stack = s; // Update the backup stack
             return make_shared<uint16_t>(s.top());
         }
         return nullptr;
@@ -107,6 +129,7 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(a | b);
+            original_stack = s; // Update the backup stack
             return make_shared<uint16_t>(s.top());
         }
         return nullptr;
@@ -119,6 +142,7 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             uint16_t b = s.top();
             s.pop();
             s.push(a & b);
+            original_stack = s; // Update the backup stack
             return make_shared<uint16_t>(s.top());
         }
         return nullptr;
@@ -146,12 +170,20 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
                 carry = (temp & carry) << 1;
             }
 
+            // check if the result is greater than 16 bits
+            if (count_significant_bits(result) > 17)
+            {
+
+                s = original_stack;
+                return nullptr;
+            }
+
             s.push(result);
+            original_stack = s; // Update the backup stack
             return make_shared<uint16_t>(s.top());
         }
-        elif (s.size() == 1) :
 
-                               else : return nullptr;
+        return nullptr;
 
     default:
         return make_shared<uint16_t>(0); // 0 if there is an empty stack
