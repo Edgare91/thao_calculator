@@ -42,18 +42,6 @@ vector<string> command_name = {"cmd_enter", "cmd_clear", "cmd_pop", "cmd_top", "
                                "cmd_right_shift", "cmd_or", "cmd_and", "cmd_add"};
 uint8_t const width = 16U;
 
-// function to count the number of significant bits to determine if the result is greater than 16 bits
-int count_significant_bits(uint16_t value)
-{
-    int i = 0;
-    while (value > 0)
-    {
-        value >>= 1;
-        i++;
-    }
-    return i;
-}
-
 // function to calculate the result of the command
 shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
 {
@@ -170,8 +158,8 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
                 carry = (temp & carry) << 1;
             }
 
-            // check if the result is greater than 16 bits
-            if (count_significant_bits(result) > 17)
+            /// Check for overflow
+            if (result < a || result < b)
             {
 
                 s = original_stack;
@@ -179,7 +167,9 @@ shared_ptr<uint16_t> rpn_calc(command const cmd, uint16_t const value = 0)
             }
 
             s.push(result);
-            original_stack = s; // Update the backup stack
+
+            /// Update the backup stack
+            original_stack = s;
             return make_shared<uint16_t>(s.top());
         }
 
@@ -333,7 +323,6 @@ bool test()
     size_t row = 0;
     while (getline(input_file, line))
     {
-        // cout << "line " << row << ":" << line << endl;
         if (row > 0)
         {
             // parse csv line
